@@ -10,3 +10,9 @@ C:\Users\Administrador\Documents\Visual Studio 2012\Projects\GenericDAO\GenericD
 C:\Users\Administrador\Documents\Visual Studio 2012\Projects\GenericDAO\GenericDAL\obj\Debug\GenericDAL.csprojResolveAssemblyReference.cache
 C:\Users\Administrador\Documents\Visual Studio 2012\Projects\GenericDAO\GenericDAL\obj\Debug\GenericDAL.dll
 C:\Users\Administrador\Documents\Visual Studio 2012\Projects\GenericDAO\GenericDAL\obj\Debug\GenericDAL.pdb
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\bin\Debug\GenericDAL.dll.config
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\bin\Debug\GenericDAL.dll
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\bin\Debug\GenericDAL.pdb
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Debug\GenericDAL.csprojResolveAssemblyReference.cache
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Debug\GenericDAL.dll
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Debug\GenericDAL.pdb

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Data.OracleClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,13 +15,14 @@ namespace GenericDAL
     /// <summary>
     /// 
     /// </summary>
-    public class GenericDAO
+    public class GenericDAO<TProvider, TConnection>
+        where TProvider:DbCommand, new() where TConnection: DbConnection, new()
     {
-        private SqlCommand comm;
+        private TProvider commandObj;
         private string connString;
-        private SqlTransaction transaction;
-        private SqlConnection conn;
-        private SqlDataAdapter adapter;
+        private DbTransaction transaction;
+        private TConnection connectionObj;
+        private DbDataAdapter adapter;
         private DataSet ds;
         private bool isTransaction;
 
@@ -29,8 +31,8 @@ namespace GenericDAL
         /// </summary>
         public GenericDAO()
         {
-            connString = DB.Default.MsDbUrl;
-            conn = new SqlConnection(connString);
+            connString = DB.Default.DbDefaultUrl;
+            connectionObj = (TConnection)Activator.CreateInstance(typeof(TConnection), connString);
         }
 
         /// <summary>
@@ -40,7 +42,7 @@ namespace GenericDAL
         public GenericDAO(String connString)
         {
             this.connString = connString;
-            conn = new SqlConnection(connString);
+            connectionObj = (TConnection)Activator.CreateInstance(typeof(TConnection), connString);
         }
 
         /// <summary>
@@ -65,9 +67,9 @@ namespace GenericDAL
         /// </summary>
         public void BeginTransaction()
         {
-            if (!isTransaction && conn.State == ConnectionState.Open)
+            if (!isTransaction && connectionObj.State == ConnectionState.Open)
             {
-                transaction = conn.BeginTransaction();
+                transaction = connectionObj.BeginTransaction();
                 isTransaction = true;
             }
         }
@@ -78,9 +80,9 @@ namespace GenericDAL
         /// <param name="level"></param>
         public void BeginTransaction(IsolationLevel level)
         {
-            if (!isTransaction && conn.State == ConnectionState.Open)
+            if (!isTransaction && connectionObj.State == ConnectionState.Open)
             {
-                transaction = conn.BeginTransaction(level);
+                transaction = connectionObj.BeginTransaction(level);
                 isTransaction = true;
             }
         }
@@ -90,13 +92,14 @@ namespace GenericDAL
         /// </summary>
         public void PrepareConnection()
         {
-            if (conn == null)
+            if (connectionObj == null)
             {
-                conn = new SqlConnection(connString);
+                connectionObj = new TConnection();
+                connectionObj.ConnectionString = connString;
             }
-            if (conn.State == ConnectionState.Closed)
+            if (connectionObj.State == ConnectionState.Closed)
             {
-                conn.Open();
+                connectionObj.Open();
             }
         }
 
@@ -105,9 +108,9 @@ namespace GenericDAL
         /// </summary>
         public void CloseConnection()
         {
-            if (conn.State == ConnectionState.Open && !isTransaction)
+            if (connectionObj.State == ConnectionState.Open && !isTransaction)
             {
-                conn.Close();
+                connectionObj.Close();
             }
         }
 
@@ -116,7 +119,7 @@ namespace GenericDAL
         /// </summary>
         public void CommitTransaction()
         {
-            if (isTransaction && conn.State == ConnectionState.Open)
+            if (isTransaction && connectionObj.State == ConnectionState.Open)
             {
                 transaction.Commit();
                 isTransaction = false;
@@ -151,20 +154,21 @@ namespace GenericDAL
         /// <returns></returns>
         public int ExecuteNonQuery(string sqlCommand, Object[] values)
         {
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
+            
             if (values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            return comm.ExecuteNonQuery();
+            return commandObj.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -177,20 +181,20 @@ namespace GenericDAL
         {
             Object returnVal = null;
 
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
-            if(values != null)
+            if (values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            returnVal = comm.ExecuteScalar();
+            returnVal = commandObj.ExecuteScalar();
 
             return returnVal;
         }
@@ -201,22 +205,22 @@ namespace GenericDAL
         /// <param name="sqlCommand"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        public SqlDataReader ExecuteReader(string sqlCommand, object[] values)
+        public DbDataReader ExecuteReader(string sqlCommand, object[] values)
         {
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
             if (values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            return comm.ExecuteReader();
+            return commandObj.ExecuteReader();
         }
 
         /// <summary>
@@ -228,23 +232,23 @@ namespace GenericDAL
         public DataSet ExecuteQuery(string sqlCommand, object[] values)
         {
             DataSet ds = new DataSet("DataTable");
-            SqlDataAdapter da = new SqlDataAdapter();
+            DbDataAdapter da = GetAdapterInstance();
             da.TableMappings.Add("Table", "DataTable");
 
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
             if(values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            da.SelectCommand = comm;
+            da.SelectCommand = commandObj;
             da.Fill(ds);
 
             return ds;      
@@ -259,23 +263,23 @@ namespace GenericDAL
         /// <returns></returns>
         public DataSet ExecuteNamedQuery(string sqlCommand, object[] values, string dsName)
         {
-            adapter = new SqlDataAdapter();
+            adapter = GetAdapterInstance();
             adapter.TableMappings.Add("Table", dsName);
             ds = new DataSet(dsName);
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
             if (values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            adapter.SelectCommand = comm;
+            adapter.SelectCommand = commandObj;
             adapter.Fill(ds, dsName);
 
             return ds;
@@ -287,22 +291,32 @@ namespace GenericDAL
         /// <param name="sqlCommand"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        public SqlCommand FillCommand(String sqlCommand, Object[] values)
+        public DbCommand FillCommand(String sqlCommand, Object[] values)
         {
-            comm = new SqlCommand();
-            comm.Connection = conn;
-            comm.CommandText = sqlCommand;
+            commandObj = new TProvider();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            comm.CommandType = CommandType.Text;
+            commandObj.CommandType = CommandType.Text;
             int index = 0;
 
             if (values != null)
                 foreach (Object val in values)
                 {
-                    comm.Parameters.AddWithValue(names[index++].ToString(), val);
+                    commandObj.AddWithValue(names[index++].ToString(), val);
                 }
 
-            return comm;
+            return commandObj;
+        }
+
+        public DbDataAdapter GetAdapterInstance()
+        {
+            if (typeof(TProvider) == typeof(SqlCommand))
+            {
+                return new SqlDataAdapter();
+            }
+
+            return new OracleDataAdapter();
         }
 
     }

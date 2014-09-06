@@ -11,5 +11,8 @@
     <Setting Name="SqlServerPass" Type="System.String" Scope="Application">
       <Value Profile="(Default)">020890</Value>
     </Setting>
+    <Setting Name="DbDefaultUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">[put default connection string here :D ]</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

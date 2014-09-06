@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GenericDAL
 {
-    public class DBUtils
+    public static class DBUtils
     {
         public static IDbDataParameter ToConvertSqlParams(IDbCommand command, string name, object value)
         {
@@ -29,6 +30,29 @@ namespace GenericDAL
             }
             
             return paramNames;
+        }
+
+        /// <summary>
+        /// Adds a parameter to the command.
+        /// </summary>
+        /// <param name="comm">
+        /// The command object.
+        /// </param>
+        /// <param name="paramName">
+        /// The name of the parameter.
+        /// </param>
+        /// <param name="value">
+        /// The parameter value to add.
+        /// </param>
+        /// <remarks>
+        /// </remarks>
+        public static void AddWithValue<TCommand>(this TCommand comm, string paramName, object value)
+            where TCommand: DbCommand
+        {
+            var param = comm.CreateParameter();
+            param.ParameterName = paramName;
+            param.Value = value;
+            comm.Parameters.Add(param);
         }
     }
 }
