@@ -3,3 +3,4 @@ D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\bin\R
 D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\bin\Release\GenericDAL.pdb
 D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Release\GenericDAL.dll
 D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Release\GenericDAL.pdb
+D:\Documentos\Visual Studio 2012\Projects\GenericDAO\GenericDAO\GenericDAL\obj\Release\GenericDAL.csprojResolveAssemblyReference.cache
