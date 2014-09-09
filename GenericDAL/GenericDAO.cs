@@ -18,10 +18,10 @@ namespace GenericDAL
         where TConnection : DbConnection, new()
         where TAdapter : DbDataAdapter, new()
     {
-        public TCommand commandObj { get; set; }
-        private string connString;
+        public TCommand Command { get; set; }
+        private string connectionString;
         private DbTransaction transaction;
-        private TConnection connectionObj;
+        private TConnection connection;
         private TAdapter adapter;
         private DataSet ds;
         private bool isTransaction;
@@ -32,8 +32,7 @@ namespace GenericDAL
         /// </summary>
         public GenericDAO()
         {
-            connString = DB.Default.DbDefaultUrl;
-            connectionObj = (TConnection)Activator.CreateInstance(typeof(TConnection), connString);
+            connection = (TConnection)Activator.CreateInstance(typeof(TConnection), connectionString);
             commandType = CommandType.Text;
         }
 
@@ -43,8 +42,8 @@ namespace GenericDAL
         /// <param name="connString"></param>
         public GenericDAO(String connString)
         {
-            this.connString = connString;
-            connectionObj = (TConnection)Activator.CreateInstance(typeof(TConnection), connString);
+            this.connectionString = connString;
+            connection = (TConnection)Activator.CreateInstance(typeof(TConnection), connString);
         }
 
         /// <summary>
@@ -52,8 +51,8 @@ namespace GenericDAL
         /// </summary>
         public String ConnectionString
         {
-            get { return connString; }
-            set { connString = value; }
+            get { return connectionString; }
+            set { connectionString = value; }
         }
 
         /// <summary>
@@ -69,9 +68,9 @@ namespace GenericDAL
         /// </summary>
         public void BeginTransaction()
         {
-            if (!isTransaction && connectionObj.State == ConnectionState.Open)
+            if (!isTransaction && connection.State == ConnectionState.Open)
             {
-                transaction = connectionObj.BeginTransaction();
+                transaction = connection.BeginTransaction();
                 isTransaction = true;
             }
         }
@@ -82,9 +81,9 @@ namespace GenericDAL
         /// <param name="level"></param>
         public void BeginTransaction(IsolationLevel level)
         {
-            if (!isTransaction && connectionObj.State == ConnectionState.Open)
+            if (!isTransaction && connection.State == ConnectionState.Open)
             {
-                transaction = connectionObj.BeginTransaction(level);
+                transaction = connection.BeginTransaction(level);
                 isTransaction = true;
             }
         }
@@ -92,16 +91,16 @@ namespace GenericDAL
         /// <summary>
         /// 
         /// </summary>
-        public void PrepareConnection()
+        public void OpenConnection()
         {
-            if (connectionObj == null)
+            if (connection == null)
             {
-                connectionObj = new TConnection();
-                connectionObj.ConnectionString = connString;
+                connection = new TConnection();
+                connection.ConnectionString = connectionString;
             }
-            if (connectionObj.State == ConnectionState.Closed)
+            if (connection.State == ConnectionState.Closed)
             {
-                connectionObj.Open();
+                connection.Open();
             }
         }
 
@@ -110,9 +109,9 @@ namespace GenericDAL
         /// </summary>
         public void CloseConnection()
         {
-            if (connectionObj.State == ConnectionState.Open)
+            if (connection.State == ConnectionState.Open)
             {
-                connectionObj.Close();
+                connection.Close();
             }
         }
 
@@ -121,7 +120,7 @@ namespace GenericDAL
         /// </summary>
         public void CommitTransaction()
         {
-            if (isTransaction && connectionObj.State == ConnectionState.Open)
+            if (isTransaction && connection.State == ConnectionState.Open)
             {
                 transaction.Commit();
                 isTransaction = false;
@@ -146,32 +145,9 @@ namespace GenericDAL
         /// <returns>the integer value that returns from DbCommand ExecuteNonQuery method.</returns>
         public int ExecuteNonQuery(string sqlCommand, Object[] values, Object[] paramDirs = null)
         {
-
             this.LoadCommandObj(sqlCommand, values, paramDirs);
-            //commandObj = new TCommand();
-            //commandObj.Connection = connectionObj;
-            //commandObj.CommandText = sqlCommand;
-            //ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            //commandObj.CommandType = commandType;
-            //int index = 0;
 
-
-            //if (values != null)
-            //    foreach (Object val in values)
-            //    {
-            //        if (paramDirs == null)
-            //        {
-            //            commandObj.AddWithValue(names[index].ToString(), val);
-            //        }
-            //        else
-            //        {
-            //            commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-            //        }
-
-            //        index++;
-            //    }
-
-            return commandObj.ExecuteNonQuery();
+            return Command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -185,7 +161,7 @@ namespace GenericDAL
             Object returnVal = null;
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
-            returnVal = commandObj.ExecuteScalar();
+            returnVal = Command.ExecuteScalar();
 
             return returnVal;
         }
@@ -200,7 +176,7 @@ namespace GenericDAL
         {
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
-            return commandObj.ExecuteReader();
+            return Command.ExecuteReader();
         }
 
         /// <summary>
@@ -216,7 +192,7 @@ namespace GenericDAL
             adapter.TableMappings.Add("Table", "DataTable");
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
-            adapter.SelectCommand = commandObj;
+            adapter.SelectCommand = Command;
             adapter.Fill(ds);
 
             return ds;
@@ -236,7 +212,7 @@ namespace GenericDAL
             ds = new DataSet(dsName);
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
-            adapter.SelectCommand = commandObj;
+            adapter.SelectCommand = Command;
             adapter.Fill(ds, dsName);
 
             return ds;
@@ -252,16 +228,16 @@ namespace GenericDAL
         {
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
-            return commandObj;
+            return Command;
         }
 
         private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null)
         {
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
+            Command = new TCommand();
+            Command.Connection = connection;
+            Command.CommandText = sqlCommand;
             ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
+            Command.CommandType = commandType;
             int index = 0;
 
             if (values != null)
@@ -269,17 +245,17 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index].ToString(), val);
+                        Command.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
                         if (paramDirs.Length < values.Length && paramDirs.Contains(names[index]) && paramDirs[0] is String)
                         {
-                            commandObj.AddWithValue(names[index].ToString(), val, ParameterDirection.Output);
+                            Command.AddWithValue(names[index].ToString(), val, ParameterDirection.Output);
                         }
                         else
                         {
-                            commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
+                            Command.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                         }
                     }
 
