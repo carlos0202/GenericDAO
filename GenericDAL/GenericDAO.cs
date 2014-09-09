@@ -128,26 +128,6 @@ namespace GenericDAL
             }
         }
 
-        //version antigua del  metodo usando parametros indexados.
-        /*
-        public void ExecuteNonQuery(string command, Object [] Values)
-        {
-            using (OleDbConnection conn = this.ConexionBD)
-            {
-                comm = new OleDbCommand();
-                comm.Connection = conn;
-                comm.CommandText = command;
-                comm.CommandType = CommandType.Text;
-                IEnumerable<IDbDataParameter> Parameters = Values.Select(
-                    (value, index) => DBUtils.ToConvertSqlParams(comm, index.ToString(), value)
-                );
-                comm.Parameters.AddRange(Parameters.ToArray());
-
-                comm.ExecuteNonQuery();
-            }
-        }
-        */
-
         /// <summary>
         /// Executes a SQL statement that doesnt return any values.
         /// </summary>
@@ -166,28 +146,30 @@ namespace GenericDAL
         /// <returns>the integer value that returns from DbCommand ExecuteNonQuery method.</returns>
         public int ExecuteNonQuery(string sqlCommand, Object[] values, Object[] paramDirs = null)
         {
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
+
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
+            //commandObj = new TCommand();
+            //commandObj.Connection = connectionObj;
+            //commandObj.CommandText = sqlCommand;
+            //ArrayList names = DBUtils.getParameterNames(sqlCommand);
+            //commandObj.CommandType = commandType;
+            //int index = 0;
 
 
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
+            //if (values != null)
+            //    foreach (Object val in values)
+            //    {
+            //        if (paramDirs == null)
+            //        {
+            //            commandObj.AddWithValue(names[index].ToString(), val);
+            //        }
+            //        else
+            //        {
+            //            commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
+            //        }
 
-                    index++;
-                }
+            //        index++;
+            //    }
 
             return commandObj.ExecuteNonQuery();
         }
@@ -201,28 +183,7 @@ namespace GenericDAL
         public Object ExecuteScalar(string sqlCommand, object[] values, Object[] paramDirs = null)
         {
             Object returnVal = null;
-
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
-
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
-
-                    index++;
-                }
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
 
             returnVal = commandObj.ExecuteScalar();
 
@@ -237,26 +198,7 @@ namespace GenericDAL
         /// <returns></returns>
         public DbDataReader ExecuteReader(string sqlCommand, object[] values, Object[] paramDirs = null)
         {
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
-
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
-                    index++;
-                }
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
 
             return commandObj.ExecuteReader();
         }
@@ -272,28 +214,7 @@ namespace GenericDAL
             DataSet ds = new DataSet("DataTable");
             adapter = new TAdapter();
             adapter.TableMappings.Add("Table", "DataTable");
-
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
-
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
-
-                    index++;
-                }
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
 
             adapter.SelectCommand = commandObj;
             adapter.Fill(ds);
@@ -313,26 +234,7 @@ namespace GenericDAL
             adapter = new TAdapter();
             adapter.TableMappings.Add("Table", dsName);
             ds = new DataSet(dsName);
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
-
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
-                    index++;
-                }
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
 
             adapter.SelectCommand = commandObj;
             adapter.Fill(ds, dsName);
@@ -348,27 +250,7 @@ namespace GenericDAL
         /// <returns></returns>
         public DbCommand FillCommand(String sqlCommand, Object[] values, Object[] paramDirs = null)
         {
-            commandObj = new TCommand();
-            commandObj.Connection = connectionObj;
-            commandObj.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            commandObj.CommandType = commandType;
-            int index = 0;
-
-            if (values != null)
-                foreach (Object val in values)
-                {
-                    if (paramDirs == null)
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val);
-                    }
-                    else
-                    {
-                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
-                    }
-
-                    index++;
-                }
+            this.LoadCommandObj(sqlCommand, values, paramDirs);
 
             return commandObj;
         }
