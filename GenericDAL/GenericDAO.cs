@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Data.OracleClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,14 +13,16 @@ namespace GenericDAL
     /// <summary>
     /// 
     /// </summary>
-    public class GenericDAO<TCommand, TConnection>
-        where TCommand:DbCommand, new() where TConnection: DbConnection, new()
+    public class GenericDAO<TCommand, TConnection, TAdapter>
+        where TCommand : DbCommand, new()
+        where TConnection : DbConnection, new()
+        where TAdapter : DbDataAdapter, new()
     {
         public TCommand commandObj { get; set; }
         private string connString;
         private DbTransaction transaction;
         private TConnection connectionObj;
-        private DbDataAdapter adapter;
+        private TAdapter adapter;
         private DataSet ds;
         private bool isTransaction;
         public CommandType commandType { get; set; }
@@ -173,20 +173,20 @@ namespace GenericDAL
             commandObj.CommandType = commandType;
             int index = 0;
 
-            
+
             if (values != null)
                 foreach (Object val in values)
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
 
-                    
+                    index++;
                 }
 
             return commandObj.ExecuteNonQuery();
@@ -214,14 +214,14 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
 
-
+                    index++;
                 }
 
             returnVal = commandObj.ExecuteScalar();
@@ -249,14 +249,13 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
-
-
+                    index++;
                 }
 
             return commandObj.ExecuteReader();
@@ -271,8 +270,8 @@ namespace GenericDAL
         public DataSet ExecuteQuery(string sqlCommand, object[] values, Object[] paramDirs = null)
         {
             DataSet ds = new DataSet("DataTable");
-            DbDataAdapter da = GetAdapterInstance();
-            da.TableMappings.Add("Table", "DataTable");
+            adapter = new TAdapter();
+            adapter.TableMappings.Add("Table", "DataTable");
 
             commandObj = new TCommand();
             commandObj.Connection = connectionObj;
@@ -281,25 +280,25 @@ namespace GenericDAL
             commandObj.CommandType = commandType;
             int index = 0;
 
-            if(values != null)
+            if (values != null)
                 foreach (Object val in values)
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
 
-
+                    index++;
                 }
 
-            da.SelectCommand = commandObj;
-            da.Fill(ds);
+            adapter.SelectCommand = commandObj;
+            adapter.Fill(ds);
 
-            return ds;      
+            return ds;
         }
 
         /// <summary>
@@ -311,7 +310,7 @@ namespace GenericDAL
         /// <returns></returns>
         public DataSet ExecuteNamedQuery(string sqlCommand, object[] values, string dsName, Object[] paramDirs = null)
         {
-            adapter = GetAdapterInstance();
+            adapter = new TAdapter();
             adapter.TableMappings.Add("Table", dsName);
             ds = new DataSet(dsName);
             commandObj = new TCommand();
@@ -326,14 +325,13 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
-
-
+                    index++;
                 }
 
             adapter.SelectCommand = commandObj;
@@ -362,27 +360,49 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val);
+                        commandObj.AddWithValue(names[index].ToString(), val);
                     }
                     else
                     {
-                        commandObj.AddWithValue(names[index++].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
                     }
 
-
+                    index++;
                 }
 
             return commandObj;
         }
 
-        private DbDataAdapter GetAdapterInstance()
+        private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null)
         {
-            if (typeof(TCommand) == typeof(SqlCommand))
-            {
-                return new SqlDataAdapter();
-            }
+            commandObj = new TCommand();
+            commandObj.Connection = connectionObj;
+            commandObj.CommandText = sqlCommand;
+            ArrayList names = DBUtils.getParameterNames(sqlCommand);
+            commandObj.CommandType = commandType;
+            int index = 0;
 
-            return new OracleDataAdapter();
+            if (values != null)
+                foreach (Object val in values)
+                {
+                    if (paramDirs == null)
+                    {
+                        commandObj.AddWithValue(names[index].ToString(), val);
+                    }
+                    else
+                    {
+                        if (paramDirs.Length < values.Length && paramDirs.Contains(names[index]) && paramDirs[0] is String)
+                        {
+                            commandObj.AddWithValue(names[index].ToString(), val, ParameterDirection.Output);
+                        }
+                        else
+                        {
+                            commandObj.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
+                        }
+                    }
+
+                    index++;
+                }
         }
 
     }
