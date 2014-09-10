@@ -46,7 +46,12 @@ namespace GenericDAL
         /// </param>
         /// <remarks>
         /// </remarks>
-        public static void AddWithValue<TCommand>(this TCommand comm, string paramName, object value, ParameterDirection direction = ParameterDirection.Input)
+        public static void AddWithValue<TCommand>
+            (
+                this TCommand comm, string paramName,
+                object value,
+                ParameterDirection direction = ParameterDirection.Input
+            )
             where TCommand: DbCommand
         {
             var param = comm.CreateParameter();

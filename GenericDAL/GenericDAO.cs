@@ -25,7 +25,7 @@ namespace GenericDAL
         private TAdapter adapter;
         private DataSet ds;
         private bool isTransaction;
-        public CommandType commandType { get; set; }
+        private CommandType commandType;
 
         /// <summary>
         /// 
@@ -231,13 +231,22 @@ namespace GenericDAL
             return Command;
         }
 
-        private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null)
+        private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null, bool isProcedure = false, string parameters = null)
         {
             Command = new TCommand();
             Command.Connection = connection;
             Command.CommandText = sqlCommand;
-            ArrayList names = DBUtils.getParameterNames(sqlCommand);
-            Command.CommandType = commandType;
+            ArrayList names = new ArrayList();
+            if (isProcedure)
+            {
+                names.AddRange(parameters.Split(','));
+            }
+            else
+            {
+                names = DBUtils.getParameterNames(sqlCommand);
+            }
+             
+            Command.CommandType = (isProcedure) ? CommandType.StoredProcedure : commandType;
             int index = 0;
 
             if (values != null)
@@ -249,13 +258,17 @@ namespace GenericDAL
                     }
                     else
                     {
-                        if (paramDirs.Length < values.Length && paramDirs.Contains(names[index]) && paramDirs[0] is String)
+                        if (paramDirs.Contains(names[index]) && paramDirs[0] is String)
                         {
                             Command.AddWithValue(names[index].ToString(), val, ParameterDirection.Output);
                         }
+                        else if(!paramDirs.Contains(names[index]) && paramDirs[0] is String)
+                        {
+                            Command.AddWithValue(names[index].ToString(), val);
+                        }
                         else
                         {
-                            Command.AddWithValue(names[index].ToString(), val, (ParameterDirection)paramDirs[index]);
+                            Command.AddWithValue(names[index].ToString(), val, (ParameterDirection)Enum.Parse(typeof(ParameterDirection), paramDirs[index].ToString()));
                         }
                     }
 
