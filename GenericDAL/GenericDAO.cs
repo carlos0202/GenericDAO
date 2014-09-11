@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Data.OleDb;
 using System.Collections;
 using System.Data.Common;
+using System.Data.OracleClient;
 
 namespace GenericDAL
 {
@@ -248,7 +249,6 @@ namespace GenericDAL
              
             Command.CommandType = (isProcedure) ? CommandType.StoredProcedure : commandType;
             int index = 0;
-
             if (values != null)
                 foreach (Object val in values)
                 {
@@ -258,17 +258,20 @@ namespace GenericDAL
                     }
                     else
                     {
-                        if (paramDirs.Contains(names[index]) && paramDirs[0] is String)
+                        if (paramDirs.Contains(names[index]))
                         {
                             Command.AddWithValue(names[index].ToString(), val, ParameterDirection.Output);
                         }
-                        else if(!paramDirs.Contains(names[index]) && paramDirs[0] is String)
+                        else if (!paramDirs.Contains(names[index]) && paramDirs.Length < values.Length)
                         {
                             Command.AddWithValue(names[index].ToString(), val);
                         }
                         else
                         {
-                            Command.AddWithValue(names[index].ToString(), val, (ParameterDirection)Enum.Parse(typeof(ParameterDirection), paramDirs[index].ToString()));
+                            Command.AddWithValue(
+                                names[index].ToString(), val,
+                                (ParameterDirection)Enum.Parse(typeof(ParameterDirection),
+                                paramDirs[index].ToString()));
                         }
                     }
 
