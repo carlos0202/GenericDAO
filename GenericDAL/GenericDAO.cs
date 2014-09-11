@@ -129,6 +129,18 @@ namespace GenericDAL
         }
 
         /// <summary>
+        /// Internal helper to Rollback an active Transaction.
+        /// </summary>
+        public void RollBackTransaction()
+        {
+            if (connection.State == ConnectionState.Open && isTransaction)
+            {
+                transaction.Rollback();
+                isTransaction = false;
+            }
+        }
+
+        /// <summary>
         /// Executes a SQL statement that doesnt return any values.
         /// </summary>
         /// <param name="sqlCommand">Command to execute against database.</param>
@@ -152,16 +164,48 @@ namespace GenericDAL
         }
 
         /// <summary>
+        /// Executes a SQL stored procedure using the CommandType.StoredProcedure option.
+        /// </summary>
+        /// <param name="procedureName">Name of the procedure.</param>
+        /// <param name="values">Values to supply for parameters, matching query and procedure declaration index.</param>
+        /// <param name="parameterNames">Names for the parameters to build (comma[,] separated).</param>
+        /// <param name="paramDirs">Parameter direcctions for the supplied parameters.</param>
+        /// <returns>The integer value from DbCommand ExecuteNonQuery method.</returns>
+        public int ExecuteNonQuery(string procedureName, Object[] values, String parameterNames, Object[] paramDirs = null)
+        {
+            this.LoadCommandObj(procedureName, values, paramDirs, true, parameterNames);
+
+            return Command.ExecuteNonQuery();
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        public Object ExecuteScalar(string sqlCommand, object[] values, Object[] paramDirs = null)
+        public Object ExecuteScalar(string sqlCommand, Object[] values, Object[] paramDirs = null)
         {
             Object returnVal = null;
             this.LoadCommandObj(sqlCommand, values, paramDirs);
 
+            returnVal = Command.ExecuteScalar();
+
+            return returnVal;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="values"></param>
+        /// <param name="parameterNames"></param>
+        /// <param name="paramDirs"></param>
+        /// <returns></returns>
+        public Object ExecuteScalar(string procedureName, Object[] values, String parameterNames, Object[] paramDirs = null)
+        {
+            Object returnVal = null;
+            this.LoadCommandObj(procedureName, values, paramDirs, true, parameterNames);
             returnVal = Command.ExecuteScalar();
 
             return returnVal;
@@ -206,15 +250,35 @@ namespace GenericDAL
         /// <param name="values"></param>
         /// <param name="dsName"></param>
         /// <returns></returns>
-        public DataSet ExecuteNamedQuery(string sqlCommand, object[] values, string dsName, Object[] paramDirs = null)
+        public DataSet ExecuteNamedQuery(string sqlCommand, Object[] values, string dsName, Object[] paramDirs = null)
         {
             adapter = new TAdapter();
             adapter.TableMappings.Add("Table", dsName);
             ds = new DataSet(dsName);
             this.LoadCommandObj(sqlCommand, values, paramDirs);
-
             adapter.SelectCommand = Command;
             adapter.Fill(ds, dsName);
+
+            return ds;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="values"></param>
+        /// <param name="dataSetName"></param>
+        /// <param name="parameterNames"></param>
+        /// <param name="paramDirs"></param>
+        /// <returns></returns>
+        public DataSet ExecuteNamedQuery(string procedureName, Object[] values, string dataSetName, string parameterNames, Object[] paramDirs = null)
+        {
+            adapter = new TAdapter();
+            adapter.TableMappings.Add("Table", dataSetName);
+            ds = new DataSet(dataSetName);
+            this.LoadCommandObj(procedureName, values, paramDirs, true, parameterNames);
+            adapter.SelectCommand = Command;
+            adapter.Fill(ds, dataSetName);
 
             return ds;
         }
@@ -232,7 +296,7 @@ namespace GenericDAL
             return Command;
         }
 
-        private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null, bool isProcedure = false, string parameters = null)
+        public void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null, bool isProcedure = false, string parameters = null)
         {
             Command = new TCommand();
             Command.Connection = connection;
@@ -241,15 +305,17 @@ namespace GenericDAL
             if (isProcedure)
             {
                 names.AddRange(parameters.Split(','));
+                Command.CommandType = CommandType.StoredProcedure;
             }
             else
             {
                 names = DBUtils.getParameterNames(sqlCommand);
+                Command.CommandType = commandType;
             }
              
-            Command.CommandType = (isProcedure) ? CommandType.StoredProcedure : commandType;
             int index = 0;
             if (values != null)
+            {
                 foreach (Object val in values)
                 {
                     if (paramDirs == null)
@@ -277,6 +343,7 @@ namespace GenericDAL
 
                     index++;
                 }
+            }
         }
 
     }
