@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
+using System.Data.OracleClient;
 
 namespace GenericDAL
 {
@@ -29,6 +31,32 @@ namespace GenericDAL
                 paramNames.Add(match.Value);
             }
             
+            return paramNames;
+        }
+
+        public static ArrayList getParameterNames<TCommand>(string query)
+            where TCommand : DbCommand
+        {
+            ArrayList paramNames = new ArrayList();
+            var type = typeof(TCommand).ToString();
+            Regex pattern = new Regex(@"(?<!@)@\w+");
+
+            if (type.IndexOf("Oracle",0,type.Length,StringComparison.OrdinalIgnoreCase) != -1) // oracle provider
+            {
+                pattern = new Regex(":([A-Za-z0-9]+)(\\s*)");
+                foreach (Match match in pattern.Matches(query))
+                {
+                    paramNames.Add(match.Value.Replace(':', ' ').Trim());
+                }
+            }
+            else // other providers
+            {
+                foreach (Match match in pattern.Matches(query))
+                {
+                    paramNames.Add(match.Value);
+                }
+            }
+
             return paramNames;
         }
 

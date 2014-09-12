@@ -243,6 +243,19 @@ namespace GenericDAL
             return ds;
         }
 
+        public DataSet ExecuteQuery(string procedureName, Object[] values, string parameterNames, Object[] paramDirs = null)
+        {
+            DataSet ds = new DataSet("DataTable");
+            adapter = new TAdapter();
+            adapter.TableMappings.Add("Table", "DataTable");
+            this.LoadCommandObj(procedureName, values, paramDirs, true, parameterNames);
+
+            adapter.SelectCommand = Command;
+            adapter.Fill(ds);
+
+            return ds;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -296,7 +309,22 @@ namespace GenericDAL
             return Command;
         }
 
-        public void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null, bool isProcedure = false, string parameters = null)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="values"></param>
+        /// <param name="parameterNames"></param>
+        /// <param name="paramDirs"></param>
+        /// <returns></returns>
+        public DbCommand FillCommand(string procedureName, Object[] values, String parameterNames, Object[] paramDirs = null)
+        {
+            this.LoadCommandObj(procedureName, values, paramDirs, true, parameterNames);
+
+            return Command;
+        }
+
+        private void LoadCommandObj(String sqlCommand, Object[] values, Object[] paramDirs = null, bool isProcedure = false, string parameters = null)
         {
             Command = new TCommand();
             Command.Connection = connection;
@@ -309,7 +337,7 @@ namespace GenericDAL
             }
             else
             {
-                names = DBUtils.getParameterNames(sqlCommand);
+                names = DBUtils.getParameterNames<TCommand>(sqlCommand);
                 Command.CommandType = commandType;
             }
              
