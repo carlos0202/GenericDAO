@@ -348,7 +348,15 @@ namespace GenericDAL
                 {
                     if (paramDirs == null)
                     {
-                        Command.AddWithValue(names[index].ToString(), val);
+                        if (names.Count == 0)
+                        {
+                            Command.AddWithValue("", val);
+                        }
+                        else
+                        {
+                            Command.AddWithValue(names[index].ToString(), val);
+                        }
+                        
                     }
                     else
                     {
