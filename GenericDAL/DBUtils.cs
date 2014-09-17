@@ -12,8 +12,18 @@ using System.Data.OracleClient;
 
 namespace GenericDAL
 {
+    /// <summary>
+    /// Clase utilitaria para el manejo de los parámetros.
+    /// </summary>
     public static class DBUtils
     {
+        /// <summary>
+        /// Crea un IDbDataParameter a partir de los datos introducidos.
+        /// </summary>
+        /// <param name="command">Commando al cual asociar el parámetro.</param>
+        /// <param name="name">Nombre del parámetro.</param>
+        /// <param name="value">Valor del parámetro.</param>
+        /// <returns>Un Objeto IDbDataParameter con los datos del parámetro creado.</returns>
         public static IDbDataParameter ToConvertSqlParams(IDbCommand command, string name, object value)
         {
             var p = command.CreateParameter();
@@ -22,6 +32,12 @@ namespace GenericDAL
             return p;
         }
 
+        /// <summary>
+        /// Método utilitario para obtener los nombres de los parámetros especificados
+        /// en una sentencia SQL dada.
+        /// </summary>
+        /// <param name="query">Sentencia SQL.</param>
+        /// <returns></returns>
         public static ArrayList getParameterNames(string query)
         {
             Regex pattern = new Regex(@"(?<!@)@\w+");
@@ -34,6 +50,13 @@ namespace GenericDAL
             return paramNames;
         }
 
+        /// <summary>
+        /// Método utilitario para obtener los nombres de los parámetros especificados
+        /// en una sentencia SQL dada.
+        /// </summary>
+        /// <typeparam name="TCommand">Tipo asociado al comando que ejecutará la sentencia.</typeparam>
+        /// <param name="query">Sentencia SQL a ejecutar.</param>
+        /// <returns></returns>
         public static ArrayList getParameterNames<TCommand>(string query)
             where TCommand : DbCommand
         {
@@ -61,16 +84,16 @@ namespace GenericDAL
         }
 
         /// <summary>
-        /// Adds a parameter to the command.
+        /// Agrega un DbParameter al DbCommand asociado.
         /// </summary>
         /// <param name="comm">
-        /// The command object.
+        /// Objeto DbCommand.
         /// </param>
         /// <param name="paramName">
-        /// The name of the parameter.
+        /// El nombre del parámetro.
         /// </param>
         /// <param name="value">
-        /// The parameter value to add.
+        /// El valor del parámetro.
         /// </param>
         /// <remarks>
         /// </remarks>

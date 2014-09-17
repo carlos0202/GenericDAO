@@ -11,14 +11,17 @@ using System.Data.OracleClient;
 
 namespace GenericDAL
 {
-    /// <summary>
-    /// Clase genérica creada para la gestión de consultas a BD
-    /// de los diferentes proveedores que extienden de las estructuras
-    /// genéricas para el manejo de consultas a Sql Server, Oracle, MySql,
-    /// tomando en cuenta la creación de parámetros adecuados para
-    /// ejecutar dichas consultas, así como el manejo explícito de
-    /// las transacciones realizadas.
-    /// </summary>
+   /// <summary>
+   /// Clase genérica creada para la gestión de consultas a BD
+   /// de los diferentes proveedores que extienden de las estructuras
+   /// genéricas para el manejo de consultas a Sql Server, Oracle, MySql,
+   /// tomando en cuenta la creación de parámetros adecuados para
+   /// ejecutar dichas consultas, así como el manejo explícito de
+   /// las transacciones realizadas.
+   /// </summary>
+   /// <typeparam name="TCommand">Clase de cual extiende el comando asociado.</typeparam>
+   /// <typeparam name="TConnection">Clase de la cual extiende la conexión asociada.</typeparam>
+   /// <typeparam name="TAdapter">Clase de la cual extiende el adaptador asociado.</typeparam>
     public class GenericDAO<TCommand, TConnection, TAdapter>
         where TCommand : DbCommand, new()
         where TConnection : DbConnection, new()
