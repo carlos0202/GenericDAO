@@ -111,5 +111,22 @@ namespace GenericDAL
             param.Direction = direction;
             comm.Parameters.Add(param);
         }
+
+
+        public static void AddParamWithVal<TCommand>
+            (
+                this TCommand comm, string paramName,
+                object value,
+                ParameterDirection direction = ParameterDirection.Input
+            )
+            where TCommand : DbCommand
+        {
+            var param = comm.CreateParameter();
+            param.ParameterName = paramName;
+            param.Value = value;
+            param.Direction = direction;
+            comm.Parameters.Add(param);
+        }
+
     }
 }
